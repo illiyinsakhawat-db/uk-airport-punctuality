@@ -1,0 +1,13 @@
+date_key,month_start,year,month_number,month_name,month_label,quarter,season,is_summer_peak
+202501,2025-01-01,2025,1,January,Jan 2025,Q1,Winter,false
+202502,2025-02-01,2025,2,February,Feb 2025,Q1,Winter,false
+202503,2025-03-01,2025,3,March,Mar 2025,Q1,Spring,false
+202504,2025-04-01,2025,4,April,Apr 2025,Q2,Spring,false
+202505,2025-05-01,2025,5,May,May 2025,Q2,Spring,false
+202506,2025-06-01,2025,6,June,Jun 2025,Q2,Summer,true
+202507,2025-07-01,2025,7,July,Jul 2025,Q3,Summer,true
+202508,2025-08-01,2025,8,August,Aug 2025,Q3,Summer,true
+202509,2025-09-01,2025,9,September,Sep 2025,Q3,Autumn,false
+202510,2025-10-01,2025,10,October,Oct 2025,Q4,Autumn,false
+202511,2025-11-01,2025,11,November,Nov 2025,Q4,Autumn,false
+202512,2025-12-01,2025,12,December,Dec 2025,Q4,Winter,false

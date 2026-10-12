@@ -1,0 +1,3 @@
+route_type,flights,on_time_pct,avg_delay_mins,cancellation_pct
+Domestic,341960.0,78.1,12.2,1.88
+International,1567832.0,71.6,15.8,0.85

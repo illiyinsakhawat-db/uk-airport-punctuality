@@ -1,0 +1,5 @@
+flight_type_key,arrival_departure_code,arrival_departure,scheduled_charter_code,scheduled_charter
+1,A,Arrival,C,Charter
+2,A,Arrival,S,Scheduled
+3,D,Departure,C,Charter
+4,D,Departure,S,Scheduled

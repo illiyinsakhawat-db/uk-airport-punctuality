@@ -1,0 +1,114 @@
+// =====================================================================
+// DAX measures for the UK Airport Punctuality model.
+// Create them in a dedicated "_Measures" table (Home > Enter data > empty
+// table named _Measures), then New measure for each block below.
+//
+// Every rate divides summed counts, so it stays correct at any level
+// (airport, airline, month, route, or any slicer combination).
+// =====================================================================
+
+// ---------- Volume ----------
+Flights =
+SUM ( fact_punctuality[flights_matched] )
+
+Flights Planned =
+SUM ( fact_punctuality[flights_planned] )
+
+Flights Cancelled =
+SUM ( fact_punctuality[flights_cancelled] )
+
+// ---------- Core KPIs ----------
+On Time % =
+DIVIDE ( SUM ( fact_punctuality[flights_on_time] ), [Flights] )
+// format: Percentage, 1 decimal
+
+Avg Delay (mins) =
+DIVIDE ( SUM ( fact_punctuality[total_delay_minutes] ), [Flights] )
+// format: Decimal, 1 decimal
+
+Cancellation % =
+DIVIDE ( [Flights Cancelled], [Flights Planned] )
+// format: Percentage, 2 decimals
+
+Over 1 Hour Late % =
+DIVIDE (
+    SUM ( fact_punctuality[flights_late_61_180] ) + SUM ( fact_punctuality[flights_late_over_180] ),
+    [Flights]
+)
+
+// ---------- Delay severity bands (for a 100% bar or donut) ----------
+Late 16-60 % =
+DIVIDE ( SUM ( fact_punctuality[flights_late_16_60] ), [Flights] )
+
+Late 1-3 Hours % =
+DIVIDE ( SUM ( fact_punctuality[flights_late_61_180] ), [Flights] )
+
+Late Over 3 Hours % =
+DIVIDE ( SUM ( fact_punctuality[flights_late_over_180] ), [Flights] )
+
+// ---------- Year on year (CAA publishes the same month last year) ----------
+PY Flights =
+SUM ( fact_punctuality[py_flights_matched] )
+
+PY On Time % =
+DIVIDE ( SUM ( fact_punctuality[py_flights_on_time] ), [PY Flights] )
+
+YoY On Time Change (pp) =
+IF (
+    NOT ISBLANK ( [PY On Time %] ),
+    ( [On Time %] - [PY On Time %] ) * 100
+)
+// format: Decimal, 1 decimal; conditional colour green > 0, red < 0
+
+Traffic Growth % =
+DIVIDE ( [Flights] - [PY Flights], [PY Flights] )
+
+// ---------- Month on month ----------
+Prev Month On Time % =
+VAR CurrentMonth = MAX ( dim_date[month_start] )
+VAR PreviousMonth = EDATE ( CurrentMonth, -1 )
+RETURN
+    CALCULATE ( [On Time %], REMOVEFILTERS ( dim_date ), dim_date[month_start] = PreviousMonth )
+
+MoM On Time Change (pp) =
+IF (
+    NOT ISBLANK ( [Prev Month On Time %] ),
+    ( [On Time %] - [Prev Month On Time %] ) * 100
+)
+
+// ---------- Seasonality ----------
+Summer On Time % =
+CALCULATE ( [On Time %], dim_date[is_summer_peak] = TRUE () )
+
+Rest Of Year On Time % =
+CALCULATE ( [On Time %], dim_date[is_summer_peak] = FALSE () )
+
+Summer Effect (pp) =
+( [Summer On Time %] - [Rest Of Year On Time %] ) * 100
+
+// ---------- Rankings (minimum volumes match the SQL analysis) ----------
+Airport On Time Rank =
+IF (
+    [Flights] >= 10000,
+    RANKX (
+        FILTER ( ALLSELECTED ( dim_airport[airport_name] ), [Flights] >= 10000 ),
+        [On Time %], , DESC, DENSE
+    )
+)
+
+Airline On Time Rank =
+IF (
+    [Flights] >= 2000,
+    RANKX (
+        FILTER ( ALLSELECTED ( dim_airline[airline_name] ), [Flights] >= 2000 ),
+        [On Time %], , DESC, DENSE
+    )
+)
+
+// ---------- Dynamic title text ----------
+Selected Period =
+VAR FirstMonth = MIN ( dim_date[month_start] )
+VAR LastMonth = MAX ( dim_date[month_start] )
+RETURN
+    FORMAT ( FirstMonth, "mmm yyyy" )
+        & IF ( FirstMonth <> LastMonth, " – " & FORMAT ( LastMonth, "mmm yyyy" ) )

@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.DS_Store
+
+# raw downloads and the local database are rebuilt by the scripts
+data/raw/*.csv
+data/*.duckdb
+*.duckdb.wal
