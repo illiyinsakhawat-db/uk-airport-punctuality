@@ -205,3 +205,9 @@ To analyse another year, add that year's file IDs from the CAA page to `scripts/
 ## 📚 Data source
 
 UK Civil Aviation Authority, [Punctuality statistics 2025](https://www.caa.co.uk/data-and-analysis/uk-aviation-market/flight-punctuality/uk-flight-punctuality-statistics/2025/), *Full Analysis Arrival Departure* monthly files. Check the CAA website for the terms of reuse.
+
+
+
+## 👤 Author
+
+**Illiyin Sakhawat**: [LinkedIn](www.linkedin.com/in/illiyin-sakhawat)
