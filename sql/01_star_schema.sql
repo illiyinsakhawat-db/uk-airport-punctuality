@@ -90,12 +90,16 @@ CROSS JOIN (VALUES ('S', 'Scheduled'), ('C', 'Charter')) AS sc(code, label);
 -- Percentages in the source are converted to flight counts so that every
 -- measure is additive and can be re-aggregated correctly at any level
 -- (averaging percentages across rows would be wrong).
+-- The CAA's delay-band percentages are shares of PLANNED flights
+-- (matched + unmatched + cancelled), so they are multiplied by planned
+-- flights; the band counts then add up to the matched flights.
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE TABLE fact_punctuality AS
 WITH derived AS (
     SELECT
         s.*,
-        number_flights_matched / 100.0 AS m   -- multiplier: percent -> flights
+        (number_flights_matched + actual_flights_unmatched
+         + number_flights_cancelled) / 100.0 AS m   -- multiplier: percent -> flights
     FROM stg_punctuality AS s
 )
 SELECT
@@ -105,11 +109,11 @@ SELECT
     al.airline_key,
     ft.flight_type_key,
 
-    SUM(number_flights_matched)                          AS flights_matched,
-    SUM(actual_flights_unmatched)                        AS flights_unmatched,
-    SUM(number_flights_cancelled)                        AS flights_cancelled,
+    SUM(number_flights_matched)::BIGINT                  AS flights_matched,
+    SUM(actual_flights_unmatched)::BIGINT                AS flights_unmatched,
+    SUM(number_flights_cancelled)::BIGINT                AS flights_cancelled,
     SUM(number_flights_matched + actual_flights_unmatched
-        + number_flights_cancelled)                      AS flights_planned,
+        + number_flights_cancelled)::BIGINT              AS flights_planned,
 
     -- CAA definition of "on time": early, or up to 15 minutes late
     SUM(m * (flights_more_than_15_minutes_early_percent
@@ -125,7 +129,7 @@ SELECT
     SUM(number_flights_matched * average_delay_mins)     AS total_delay_minutes,
 
     -- same month, previous year (as published by the CAA)
-    SUM(previous_year_month_flights_matched)             AS py_flights_matched,
+    SUM(previous_year_month_flights_matched)::BIGINT     AS py_flights_matched,
     SUM(previous_year_month_flights_matched / 100.0
         * coalesce(previous_year_month_early_to_15_mins_late_percent, 0)) AS py_flights_on_time,
     SUM(previous_year_month_flights_matched

@@ -10,6 +10,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
 
+from .names import title_case  # noqa: E402
 from .warehouse import load_named_queries  # noqa: E402
 
 INK = "#1f2933"
@@ -42,23 +43,15 @@ def run_queries(con: duckdb.DuckDBPyConnection, tables_dir: Path) -> dict[str, p
     results = {}
     for name, sql in load_named_queries().items():
         df = con.execute(sql).df()
+        for col in df.select_dtypes("float").columns:  # SUM() of integers comes back as float
+            if df[col].notna().all() and (df[col] % 1 == 0).all() and not col.endswith(("_pct", "_mins", "_pp")):
+                df[col] = df[col].astype("int64")
         df.to_csv(tables_dir / f"{name}.csv", index=False)
         results[name] = df
     return results
 
 
-KEEP_UPPER = {"UK", "TUI", "KLM", "SAS", "TAP", "LOT", "BA", "USA", "UAE", "JFK", "AG", "PLC", "LTD"}
-
-
-SPECIAL_NAMES = {"EASYJET": "easyJet", "JET2.COM": "Jet2.com", "WIZZ AIR": "Wizz Air"}
-
-
-def _title_case(name: str) -> str:
-    """'BRITISH AIRWAYS' -> 'British Airways', keeping known acronyms upper case."""
-    name = str(name)
-    if name in SPECIAL_NAMES:
-        return SPECIAL_NAMES[name]
-    return " ".join(w if w in KEEP_UPPER else w.capitalize() for w in name.split())
+_title_case = title_case
 
 
 def _save(fig, path: Path) -> Path:
@@ -102,7 +95,7 @@ def chart_ranked_bars(df: pd.DataFrame, label_col: str, title: str, path: Path, 
         ax.text(v + 0.4, i, f"{v:.1f}%", va="center", fontsize=8.5, color=INK)
     ax.axvline(overall, color=MUTED, linestyle=":", linewidth=1)
     ax.set_xlim(0, 100)
-    ax.set_xlabel(f"Flights on time (%)   ·   dotted line = median {overall:.1f}%   ·   green = above median")
+    ax.set_xlabel(f"Flights on time (%)  ·  dotted line = median ({overall:.1f}%)")
     ax.set_title(title)
     return _save(fig, path)
 
@@ -118,7 +111,7 @@ def chart_summer_effect(df: pd.DataFrame, path: Path) -> Path | None:
     ax.scatter(data["summer_on_time_pct"], y, color=BAD, s=36, label="Summer peak (Jun–Aug)", zorder=3)
     ax.set_yticks(list(y), [_title_case(n) for n in data["airport_name"]])
     ax.set_xlabel("Flights on time (%)")
-    ax.legend(frameon=False, loc="lower right", fontsize=8.5)
+    ax.legend(frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.06 - 0.6 / len(data)), ncol=2, fontsize=9)
     ax.set_title("How much the summer peak costs each major airport")
     return _save(fig, path)
 

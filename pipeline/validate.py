@@ -49,10 +49,11 @@ def run_checks(df: pd.DataFrame) -> list[CheckResult]:
     results.append(_result("Flight counts are not negative", bad, total, True,
                            "no negative counts", "{n:,} rows with negative counts"))
 
-    flown = df["number_flights_matched"] > 0
-    band_sum = df[BAND_COLUMNS].sum(axis=1)
-    bad = int((flown & ((band_sum - 100).abs() > BAND_TOLERANCE)).sum())
-    results.append(_result(f"Delay bands sum to 100% (±{BAND_TOLERANCE:g}pp) where flights matched", bad, total, False,
+    planned = df[counts].sum(axis=1)
+    pct_sum = df[BAND_COLUMNS].sum(axis=1) + df["flights_unmatched_percent"] + df["flights_cancelled_percent"]
+    bad = int(((planned > 0) & ((pct_sum - 100).abs() > BAND_TOLERANCE)).sum())
+    results.append(_result(f"Delay bands + unmatched % + cancelled % sum to 100% (±{BAND_TOLERANCE:g}pp)",
+                           bad, total, False,
                            "all rows reconcile", "{n:,} rows ({pct:.2f}%) do not reconcile"))
 
     bad = int((df["average_delay_mins"] < 0).sum())

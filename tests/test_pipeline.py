@@ -23,13 +23,16 @@ HEADER = ["run_date"] + REQUIRED_COLUMNS[:7] + [
 
 
 def _row(period, airport, country, dest, airline, ad, sc, matched, bands, avg_delay, cancelled=0):
+    """`bands` are shares of matched flights; like the CAA, the file stores them as shares of planned flights."""
+    planned = matched + cancelled
+    bands = [round(b * matched / planned, 6) for b in bands]
     return {
         "run_date": "01/01/2026 09:00", "reporting_period": period, "reporting_airport": airport,
         "origin_destination_country": country, "origin_destination": dest, "airline_name": airline,
         "arrival_departure": ad, "scheduled_charter": sc,
         "number_flights_matched": matched, "actual_flights_unmatched": 0, "number_flights_cancelled": cancelled,
         **dict(zip(BAND_COLUMNS, bands)),
-        "flights_unmatched_percent": 0, "flights_cancelled_percent": 0, "average_delay_mins": avg_delay,
+        "flights_unmatched_percent": 0, "flights_cancelled_percent": round(100 * cancelled / planned, 6), "average_delay_mins": avg_delay,
         "previous_year_month_flights_matched": matched, "previous_year_month_early_to_15_mins_late_percent": 70,
         "previous_year_month_average_delay": 15,
     }
@@ -91,7 +94,8 @@ def test_fact_reconciles_and_on_time_is_weighted(raw_dir, tmp_path):
     con = build(df, tmp_path / "w.duckdb")
     assert all(raw == fact for _, raw, fact in reconcile(con))
 
-    expected = (df["number_flights_matched"] * df[BAND_COLUMNS[:3]].sum(axis=1) / 100).sum() \
+    planned = df["number_flights_matched"] + df["actual_flights_unmatched"] + df["number_flights_cancelled"]
+    expected = (planned * df[BAND_COLUMNS[:3]].sum(axis=1) / 100).sum() \
         / df["number_flights_matched"].sum() * 100
     actual = con.execute(
         "SELECT 100 * SUM(flights_on_time) / SUM(flights_matched) FROM fact_punctuality").fetchone()[0]
@@ -100,6 +104,15 @@ def test_fact_reconciles_and_on_time_is_weighted(raw_dir, tmp_path):
     domestic = con.execute(
         "SELECT is_domestic FROM dim_destination WHERE destination_name = 'EDINBURGH'").fetchone()[0]
     assert domestic is True
+
+
+def test_band_counts_add_up_to_matched_flights(raw_dir, tmp_path):
+    con = build(clean(read_raw_files(raw_dir)[0]), tmp_path / "w.duckdb")
+    matched, banded = con.execute("""
+        SELECT SUM(flights_matched),
+               SUM(flights_on_time + flights_late_16_60 + flights_late_61_180 + flights_late_over_180)
+        FROM fact_punctuality""").fetchone()
+    assert banded == pytest.approx(matched, rel=1e-4)
 
 
 def test_all_analysis_queries_run(raw_dir, tmp_path):
@@ -122,3 +135,15 @@ def test_end_to_end(raw_dir, tmp_path):
     con = duckdb.connect()
     n = con.execute(f"SELECT COUNT(*) FROM '{(out / 'powerbi' / 'fact_punctuality.csv').as_posix()}'").fetchone()[0]
     assert n == 12 * 3 * 3 * 3 * 2
+
+
+def test_streamlit_app_runs_on_exported_data():
+    """Smoke test of the dashboard; needs powerbi/data from a real pipeline run."""
+    data_dir = Path(__file__).resolve().parents[1] / "powerbi" / "data"
+    if not (data_dir / "fact_punctuality.csv").exists():
+        pytest.skip("run the pipeline first to create powerbi/data")
+    from streamlit.testing.v1 import AppTest
+
+    app = AppTest.from_file(str(data_dir.parents[1] / "streamlit_app.py"), default_timeout=60).run()
+    assert not app.exception
+    assert app.metric[0].label == "Flights"

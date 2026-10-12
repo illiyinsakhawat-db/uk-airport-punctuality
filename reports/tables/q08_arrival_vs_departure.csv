@@ -1,5 +1,5 @@
 arrival_departure,scheduled_charter,flights,on_time_pct,avg_delay_mins,cancellation_pct
-Arrival,Scheduled,929471.0,73.5,15.0,1.1
-Departure,Scheduled,929718.0,72.8,14.7,1.02
-Arrival,Charter,25282.0,54.6,27.1,0.24
-Departure,Charter,25321.0,62.4,20.8,0.2
+Arrival,Scheduled,929471,74.2,15.0,1.1
+Departure,Scheduled,929718,73.5,14.7,1.02
+Arrival,Charter,25282,54.7,27.1,0.24
+Departure,Charter,25321,62.5,20.8,0.2

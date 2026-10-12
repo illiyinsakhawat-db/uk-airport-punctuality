@@ -10,7 +10,7 @@
 -- name: q01_headline_kpis
 -- Q1. What does UK punctuality look like overall, and versus last year?
 SELECT
-    SUM(flights_matched)                                                  AS flights,
+    SUM(flights_matched)::BIGINT                                          AS flights,
     ROUND(100.0 * SUM(flights_on_time) / SUM(flights_matched), 1)         AS on_time_pct,
     ROUND(SUM(total_delay_minutes) / SUM(flights_matched), 1)             AS avg_delay_mins,
     ROUND(100.0 * SUM(flights_late_61_180 + flights_late_over_180)

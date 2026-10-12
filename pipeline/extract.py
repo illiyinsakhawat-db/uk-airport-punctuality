@@ -22,7 +22,8 @@ COUNT_COLUMNS = [
     "previous_year_month_flights_matched",
 ]
 
-# Percentages of *matched* flights falling in each delay band (they sum to ~100).
+# Percentages of *planned* flights (matched + unmatched + cancelled) in each delay
+# band. Together with the unmatched and cancelled percentages they sum to ~100.
 BAND_COLUMNS = [
     "flights_more_than_15_minutes_early_percent",
     "flights_15_minutes_early_to_1_minute_early_percent",
@@ -36,6 +37,8 @@ BAND_COLUMNS = [
 ]
 
 OTHER_NUMERIC_COLUMNS = [
+    "flights_unmatched_percent",
+    "flights_cancelled_percent",
     "average_delay_mins",
     "previous_year_month_early_to_15_mins_late_percent",
     "previous_year_month_average_delay",
@@ -86,6 +89,7 @@ def clean(raw: pd.DataFrame) -> pd.DataFrame:
     for col in BAND_COLUMNS + OTHER_NUMERIC_COLUMNS:
         df[col] = pd.to_numeric(df[col].str.strip(), errors="coerce")
 
-    df[BAND_COLUMNS] = df[BAND_COLUMNS].fillna(0.0)
+    pct_cols = BAND_COLUMNS + ["flights_unmatched_percent", "flights_cancelled_percent"]
+    df[pct_cols] = df[pct_cols].fillna(0.0)
     df["average_delay_mins"] = df["average_delay_mins"].fillna(0.0)
     return df

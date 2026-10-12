@@ -12,7 +12,7 @@ Source files (12): `202501_Punctuality_Statistics_Full_Analysis_Arrival_Departur
 | Arrival/departure code is A or D | ✅ PASS | all codes valid |
 | Scheduled/charter code is S or C | ✅ PASS | all codes valid |
 | Flight counts are not negative | ✅ PASS | no negative counts |
-| Delay bands sum to 100% (±1pp) where flights matched | ⚠️ WARN | 7,882 rows (10.13%) do not reconcile |
+| Delay bands + unmatched % + cancelled % sum to 100% (±1pp) | ⚠️ WARN | 3 rows (0.00%) do not reconcile |
 | Average delay is not negative | ✅ PASS | no negative averages |
 | One row per period/airport/route/airline/type | ✅ PASS | grain is unique |
 | Rows with no flights at all | ⚠️ WARN | 9,440 rows (kept, contribute zero) |
