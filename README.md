@@ -8,7 +8,7 @@
 
 An end-to-end analytics project on **official UK Civil Aviation Authority (CAA) punctuality statistics**. A Python pipeline downloads a year of monthly CAA data, validates and reconciles it, and loads it into a **SQL star schema**. SQL answers 13 business questions. An interactive **Streamlit dashboard** lets stakeholders compare airport efficiency, track on-time KPIs and evaluate carrier performance, and the same star schema ships as a **Power BI-ready model with DAX measures**.
 
-> 🔗 **Live dashboard:** _add your Streamlit Community Cloud link here_
+> 🔗 **Live dashboard:** https://illiyinsakhawat-db-uk-airport-punctuality-streamlit-app-kauc1n.streamlit.app/
 
 ![Dashboard overview](docs/screenshots/dashboard_overview.png)
 
